@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaos Mode – Card Fight Vanguard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dark: #8a6a20;
+    --deep: #0a0c1a;
+    --panel: #13172e;
+    --border: #2a305a;
+    --text: #e8e0cc;
+    --text-muted: #8a85a0;
+    --red: #c0392b;
+    --red-glow: #e74c3c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--deep);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(42,74,138,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(192,57,43,0.12) 0%, transparent 50%),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(201,168,76,0.02) 40px, rgba(201,168,76,0.02) 41px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Top bar buttons ── */
+  .top-bar {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .top-btn {
+    background: rgba(19,23,46,0.95);
+    border: 1px solid var(--gold-dark);
+    color: var(--gold-light);
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .top-btn:hover { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); }
+  .top-btn.reset-btn {
+    border-color: rgba(192,57,43,0.5);
+    color: rgba(231,76,60,0.8);
+  }
+  .top-btn.reset-btn:hover {
+    background: rgba(192,57,43,0.15);
+    border-color: var(--red-glow);
+    color: var(--red-glow);
+  }
+
+  /* ── Persistent rule banner ── */
+
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    background: linear-gradient(180deg, rgba(201,168,76,0.06) 0%, transparent 100%);
+  }
+  .header-emblem {
+    width: 60px; height: 60px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 28px;
+    position: relative;
+  }
+  .header-emblem::before {
+    content: '';
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+  header h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.2rem, 4vw, 2rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+    letter-spacing: 2px; line-height: 1.3;
+  }
+  header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; letter-spacing: 1px; }
+
+  /* ── Main ── */
+  main {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: calc(100vh - 260px);
+    padding: 1.2rem 1rem 1.5rem;
+    gap: 2rem;
+  }
+
+  /* ── Spin button ── */
+  .spin-container {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1.2rem;
+  }
+  .spin-label { font-size: 0.8rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  #spinBtn {
+    position: relative;
+    width: 180px; height: 180px;
+    border-radius: 50%; border: none; cursor: pointer;
+    background: radial-gradient(circle at 40% 35%, #2a305a 0%, #0a0c1a 70%);
+    outline: none; transition: transform 0.15s;
+  }
+  #spinBtn::before {
+    content: '';
+    position: absolute; inset: -3px; border-radius: 50%;
+    background: conic-gradient(var(--gold) 0deg, var(--gold-dark) 60deg, var(--gold) 120deg, var(--gold-dark) 180deg, var(--gold) 240deg, var(--gold-dark) 300deg, var(--gold) 360deg);
+    z-index: -1;
+    animation: rotateBorder 6s linear infinite;
+  }
+  #spinBtn::after {
+    content: ''; position: absolute; inset: -8px; border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.2); z-index: -2;
+  }
+  @keyframes rotateBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  #spinBtn:hover { transform: scale(1.04); }
+  #spinBtn:active { transform: scale(0.97); }
+  #spinBtn.spinning { animation: btnPulse 0.4s ease-in-out infinite alternate; }
+  @keyframes btnPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+  .btn-inner { display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+  .btn-icon { font-size: 2.8rem; filter: drop-shadow(0 0 8px rgba(201,168,76,0.6)); }
+  .btn-text {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.75rem; color: var(--gold-light);
+    letter-spacing: 1px; text-shadow: 0 0 10px rgba(201,168,76,0.5);
+  }
+
+  /* ── Recent history button area ── */
+  .history-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .history-area-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .history-btn-row {
+    display: flex;
+    gap: 10px;
+  }
+  .history-card-btn {
+    background: rgba(19,23,46,0.8);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 80px;
+    font-family: 'Sarabun', sans-serif;
+  }
+  .history-card-btn:hover { border-color: var(--gold-dark); background: rgba(201,168,76,0.08); }
+  .history-card-btn.empty { opacity: 0.3; pointer-events: none; }
+  .hbtn-label { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.5px; }
+  .hbtn-num {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.1rem; color: var(--gold);
+    text-shadow: 0 0 8px rgba(201,168,76,0.4);
+  }
+  .hbtn-num.empty-num { font-family: 'Sarabun', sans-serif; font-size: 0.85rem; color: var(--border); }
+
+  /* ── Modals ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,7,18,0.88);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .result-modal {
+    background: var(--panel);
+    border: 1px solid var(--gold-dark);
+    border-radius: 12px;
+    width: min(540px, 100%);
+    max-height: 90vh; overflow-y: auto;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .result-modal { transform: scale(1) translateY(0); }
+
+  .result-modal-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .rule-num-badge {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: rgba(201,168,76,0.08);
+  }
+  .rule-num-badge span { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: var(--gold); }
+  .result-modal-header-text h2 { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+  .result-modal-header-text p { font-size: 0.9rem; color: var(--gold-light); font-weight: 500; }
+  .result-modal-body { padding: 1.5rem; }
+
+
+
+  .result-rule-text {
+    font-size: 1.05rem; line-height: 1.8; color: var(--text);
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--gold-dark);
+    padding: 1rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+  }
+  .result-rule-text .sub-item { display: block; padding-left: 1rem; color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+  .result-rule-text .sub-item strong { color: var(--gold-light); font-weight: 500; }
+
+  .modal-close-btn {
+    margin-top: 1.2rem; width: 100%; padding: 0.75rem;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px; color: var(--gold-light);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .modal-close-btn:hover { background: rgba(201,168,76,0.2); border-color: var(--gold); }
+
+  /* Rules list modal */
+  .rules-modal {
+    background: var(--panel);
+    border: 1px solid var(--gold-dark);
+    border-radius: 12px;
+    width: min(600px, 100%); max-height: 88vh; overflow-y: auto;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .rules-modal { transform: scale(1) translateY(0); }
+  .rules-modal-header {
+    position: sticky; top: 0; background: var(--panel);
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; z-index: 10;
+  }
+  .rules-modal-header h2 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: var(--gold); letter-spacing: 1px; }
+  .rules-modal-header span { font-size: 0.78rem; color: var(--text-muted); }
+  .close-x-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-muted); width: 32px; height: 32px;
+    border-radius: 6px; cursor: pointer; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .close-x-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+  .rules-list { padding: 1rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 4px; }
+  .rule-item { display: flex; gap: 12px; padding: 0.7rem 0.8rem; border-radius: 8px; transition: background 0.15s; align-items: flex-start; }
+  .rule-item:hover { background: rgba(255,255,255,0.03); }
+  .rule-item-num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--gold-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; color: var(--gold); font-weight: 700;
+    background: rgba(201,168,76,0.05);
+  }
+  .rule-item-text { font-size: 0.88rem; line-height: 1.7; color: var(--text); flex: 1; padding-top: 3px; }
+  .rule-item-text .sub { display: block; color: var(--text-muted); font-size: 0.83rem; padding-left: 0.5rem; }
+  .rule-item-text .sub b { color: var(--gold-light); font-weight: 500; }
+
+  /* Reset confirm modal */
+  .confirm-modal {
+    background: var(--panel);
+    border: 1px solid rgba(192,57,43,0.5);
+    border-radius: 12px;
+    width: min(360px, 100%);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .confirm-modal { transform: scale(1) translateY(0); }
+  .confirm-modal h3 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: var(--red-glow); margin-bottom: 0.8rem; }
+  .confirm-modal p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btns button {
+    flex: 1; padding: 0.7rem;
+    border-radius: 8px; cursor: pointer;
+    font-family: 'Sarabun', sans-serif; font-size: 0.9rem; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .confirm-yes { background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.5); color: var(--red-glow); }
+  .confirm-yes:hover { background: rgba(192,57,43,0.35); }
+  .confirm-no { background: rgba(201,168,76,0.08); border: 1px solid var(--gold-dark); color: var(--gold-light); }
+  .confirm-no:hover { background: rgba(201,168,76,0.18); }
+
+  /* ── Slot machine overlay ── */
+  #slotOverlay {
+    position: fixed; inset: 0; z-index: 150;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,7,18,0.75);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  #slotOverlay.active { opacity: 1; pointer-events: all; }
+
+  .slot-machine {
+    display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  }
+  .slot-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.85rem; color: var(--gold);
+    letter-spacing: 3px; text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .slot-window {
+    position: relative;
+    width: 200px; height: 120px;
+    background: var(--panel);
+    border: 2px solid var(--gold-dark);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  /* shine lines top & bottom */
+  .slot-window::before, .slot-window::after {
+    content: '';
+    position: absolute; left: 0; right: 0; height: 36px; z-index: 10; pointer-events: none;
+  }
+  .slot-window::before {
+    top: 0;
+    background: linear-gradient(180deg, var(--panel) 0%, transparent 100%);
+  }
+  .slot-window::after {
+    bottom: 0;
+    background: linear-gradient(0deg, var(--panel) 0%, transparent 100%);
+  }
+  /* highlight line in center */
+  .slot-highlight {
+    position: absolute; left: 0; right: 0;
+    top: 50%; transform: translateY(-50%);
+    height: 44px;
+    border-top: 1px solid rgba(201,168,76,0.5);
+    border-bottom: 1px solid rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.05);
+    z-index: 5; pointer-events: none;
+  }
+
+  .slot-reel {
+    display: flex; flex-direction: column; align-items: center;
+    position: absolute; left: 0; right: 0;
+    top: 0;
+    will-change: transform;
+  }
+  .slot-item {
+    width: 100%; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .slot-num {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem; color: var(--gold-light);
+    text-shadow: 0 0 16px rgba(201,168,76,0.7);
+    line-height: 1;
+  }
+  .slot-num.final {
+    color: #fff;
+    text-shadow: 0 0 24px rgba(201,168,76,1), 0 0 48px rgba(201,168,76,0.5);
+  }
+
+  .slot-indicator {
+    display: flex; gap: 6px;
+  }
+  .slot-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .slot-dot.lit { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+
+  /* Particle canvas */
+  #particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
+
+
+
+  @media (max-width: 500px) {
+    #spinBtn { width: 150px; height: 150px; }
+    .btn-icon { font-size: 2.2rem; }
+    .btn-text { font-size: 0.65rem; }
+    .top-btn { font-size: 0.72rem; padding: 0.4rem 0.6rem; }
+  }
+
+  /* ── Persist card rule 38 ── */
+  #persistCardSection {
+    display: none;
+    padding: 0 1rem 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0;
+  }
+  #persistCardSection.visible {
+    display: block;
+  }
+  .persist-card {
+    background: rgba(10,30,22,0.85);
+    border: 1px solid rgba(29,158,117,0.5);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .persist-card-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* ── Active effect cards ── */
+  .active-cards-section {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    padding: 1.2rem 1rem 0;
+    min-height: 0;
+  }
+  .active-cards-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: min(700px, 92vw);
+  }
+  .effect-card {
+    background: rgba(19,23,46,0.75);
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    flex: 1 1 280px;
+    max-width: 420px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    animation: cardFadeIn 0.35s ease;
+    cursor: pointer;
+  }
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .effect-card.two-turn {
+    border-color: rgba(74,122,204,0.45);
+    background: rgba(19,23,46,0.85);
+  }
+  .effect-card:hover { border-color: rgba(201,168,76,0.4); }
+  .effect-card.two-turn:hover { border-color: rgba(74,122,204,0.65); }
+  .effect-card-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .effect-card-num {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.72rem;
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    padding: 1px 9px;
+    flex-shrink: 0;
+  }
+  .effect-card.two-turn .effect-card-num {
+    color: #7aabf0;
+    background: rgba(74,122,204,0.1);
+    border-color: rgba(74,122,204,0.35);
+  }
+  .effect-card-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .effect-card-turns {
+    font-size: 0.65rem;
+    color: rgba(74,122,204,0.8);
+    background: rgba(74,122,204,0.1);
+    border-radius: 10px;
+    padding: 1px 7px;
+    border: 1px solid rgba(74,122,204,0.25);
+    flex-shrink: 0;
+  }
+  .effect-card-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  .effect-card.expanded .effect-card-text {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+  .effect-card-expand-hint {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 2px;
+    opacity: 0.6;
+  }
+  .effect-card-subs {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  /* ── Dice button ── */
+  .dice-btn {
+    border-color: rgba(74,122,204,0.5);
+    color: rgba(130,180,255,0.9);
+  }
+  .dice-btn:hover {
+    background: rgba(74,122,204,0.15);
+    border-color: rgba(130,180,255,0.7);
+    color: rgba(160,200,255,1);
+  }
+
+  /* ── Dice modal ── */
+  .dice-modal {
+    background: var(--panel);
+    border: 1px solid rgba(74,122,204,0.4);
+    border-radius: 14px;
+    width: min(380px, 92vw);
+    padding: 2rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-overlay.open .dice-modal {
+    transform: scale(1) translateY(0);
+  }
+  .dice-modal-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.9rem;
+    color: rgba(130,180,255,0.9);
+    letter-spacing: 2px;
+  }
+  .dice-area {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+  }
+  .die {
+    width: 80px; height: 80px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.1s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  #die1 {
+    background: linear-gradient(135deg, #0d1f3c 0%, #061228 100%);
+    border: 2px solid rgba(74,122,204,0.6);
+  }
+  #die2 {
+    background: linear-gradient(135deg, #2a0a0a 0%, #1a0505 100%);
+    border: 2px solid rgba(192,57,43,0.6);
+  }
+  .die.rolling {
+    animation: dieRoll 0.08s ease-in-out infinite alternate;
+  }
+  @keyframes dieRoll {
+    from { transform: rotate(-8deg) scale(0.95); }
+    to   { transform: rotate(8deg) scale(1.05); }
+  }
+  .die.landed {
+    animation: dieLand 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes dieLand {
+    0%   { transform: scale(1.2) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .die-face {
+    display: grid;
+    width: 60px; height: 60px;
+    gap: 4px;
+    padding: 4px;
+  }
+  .pip {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    align-self: center;
+    justify-self: center;
+  }
+  .pip-blue {
+    background: rgba(100,160,255,0.95);
+    box-shadow: 0 0 6px rgba(100,160,255,0.5);
+  }
+  .pip-red {
+    background: rgba(231,76,60,0.95);
+    box-shadow: 0 0 6px rgba(231,76,60,0.5);
+  }
+  .dice-plus {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+  }
+  .dice-result {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.6rem;
+    color: rgba(160,200,255,1);
+    text-shadow: 0 0 20px rgba(100,160,255,0.4);
+    min-height: 2.2rem;
+    transition: opacity 0.2s;
+  }
+  .dice-result.hidden { opacity: 0; }
+  .dice-result-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-top: -0.8rem;
+  }
+  .dice-roll-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(74,122,204,0.12);
+    border: 1px solid rgba(74,122,204,0.45);
+    border-radius: 8px;
+    color: rgba(130,180,255,0.9);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .dice-roll-btn:hover {
+    background: rgba(74,122,204,0.22);
+    border-color: rgba(130,180,255,0.7);
+  }
+  .dice-roll-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .dice-close-btn {
+    width: 100%;
+    padding: 0.55rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .dice-close-btn:hover { border-color: var(--gold-dark); color: var(--gold); }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<!-- Slot machine animation overlay -->
+<div id="slotOverlay">
+  <div class="slot-machine">
+    <div class="slot-title">✦ drawing fate ✦</div>
+    <div class="slot-window">
+      <div class="slot-highlight"></div>
+      <div class="slot-reel" id="slotReel"></div>
+    </div>
+    <div class="slot-indicator" id="slotDots">
+      <div class="slot-dot"></div><div class="slot-dot"></div><div class="slot-dot"></div>
+      <div class="slot-dot"></div><div class="slot-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<button class="top-btn dice-btn" id="diceLeftBtn" onclick="openDice()" style="position:fixed;top:1rem;left:1rem;z-index:100;">🎲 ทอยลูกเต๋า</button>
+
+<div class="top-bar">
+  <button class="top-btn reset-btn" onclick="openConfirm()">🔄 รีเซ็ต</button>
+  <button class="top-btn" onclick="openRulesModal()">📋 ดูกฏทั้งหมด</button>
+</div>
+
+<header>
+  <div class="header-emblem">⚔️</div>
+  <h1>CHAOS MODE</h1>
+  <p>Card Fight Vanguard · Special Rules Randomizer</p>
+</header>
+
+<div class="active-cards-section">
+  <div class="active-cards-wrap" id="activeCardsWrap"></div>
+</div>
+
+
+<main>
+  <div class="spin-container">
+    <div class="spin-label">กดเพื่อสุ่มกฏ</div>
+    <button id="spinBtn" onclick="spinRule()">
+      <div class="btn-inner">
+        <div class="btn-icon">🎴</div>
+        <div class="btn-text">ROLL</div>
+      </div>
+    </button>
+
+    <!-- History buttons -->
+    <div class="history-area">
+      <div class="history-area-label">กฏล่าสุด 2 เทิร์น</div>
+      <div class="history-btn-row">
+        <button class="history-card-btn empty" id="histBtn1" onclick="showHistoryRule(0)">
+          <span class="hbtn-label">เทิร์นล่าสุด</span>
+          <span class="hbtn-num empty-num" id="histNum1">—</span>
+        </button>
+        <button class="history-card-btn empty" id="histBtn2" onclick="showHistoryRule(1)">
+          <span class="hbtn-label">เทิร์นก่อนหน้า</span>
+          <span class="hbtn-num empty-num" id="histNum2">—</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="persistCardSection">
+  <div class="persist-card">
+    <div class="effect-card-header">
+      <span class="effect-card-num" style="color:rgba(93,202,165,0.9);background:rgba(29,158,117,0.1);border-color:rgba(29,158,117,0.35);">ข้อ 38</span>
+      <span class="effect-card-label">เอฟเฟคที่กำลังแสดงผล</span>
+      <span class="effect-card-turns" style="background:rgba(29,158,117,0.12);border-color:rgba(29,158,117,0.35);color:rgba(93,202,165,0.9);">✦ ตลอดเกม</span>
+    </div>
+    <div class="persist-card-text" id="persistCardText"></div>
+  </div>
+</div>
+
+
+
+<!-- Result popup -->
+<div class="modal-overlay" id="resultOverlay" onclick="closeOnBg(event,'resultOverlay')">
+  <div class="result-modal">
+    <div class="result-modal-header">
+      <div class="rule-num-badge"><span id="ruleNumDisplay">0</span></div>
+      <div class="result-modal-header-text">
+        <h2>Chaos Mode — กฏที่สุ่มได้</h2>
+        <p id="ruleShortTitle">กฏข้อที่ X</p>
+      </div>
+    </div>
+    <div class="result-modal-body">
+
+      <div class="result-rule-text" id="ruleTextDisplay"></div>
+      <button class="modal-close-btn" onclick="closeModal('resultOverlay')">✔ รับทราบแล้ว — ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rules list popup -->
+<div class="modal-overlay" id="rulesOverlay" onclick="closeOnBg(event,'rulesOverlay')">
+  <div class="rules-modal">
+    <div class="rules-modal-header">
+      <h2>CHAOS MODE — กฏทั้งหมด</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span>46 ข้อ (0–45)</span>
+        <button class="close-x-btn" onclick="closeModal('rulesOverlay')">✕</button>
+      </div>
+    </div>
+    <div class="rules-list" id="rulesList"></div>
+  </div>
+</div>
+
+<!-- Reset confirm popup -->
+<div class="modal-overlay" id="confirmOverlay" onclick="closeOnBg(event,'confirmOverlay')">
+  <div class="confirm-modal">
+    <h3>รีเซ็ตเกม?</h3>
+    <p>จะลบประวัติการสุ่ม, กฏตลอดเกม และรีเซ็ตทุกอย่างกลับสู่สภาพเริ่มต้น</p>
+    <div class="confirm-btns">
+      <button class="confirm-yes" onclick="doReset()">✕ รีเซ็ต</button>
+      <button class="confirm-no" onclick="closeModal('confirmOverlay')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const rules = [
+  { id: 0, text: "จบเทิร์นทันที!" },
+  { id: 1, text: "คุณทำความเสียหายใส่แวนการ์ด 1 ดาเมจ" },
+  { id: 2, text: "คุณจั่วการ์ด 2 ใบ" },
+  { id: 3, text: "คุณหงายดาเมจ 2 ใบ และ โซลชาร์จ 2 ใบ" },
+  { id: 4, text: "คู่แข่งฮิล 2 ดาเมจ" },
+  { id: 5, text: "แวนการ์ดของคุณได้รับความสามารถ [Cont] : เมื่อเรียการ์ดของคุณโจมตี ถ้าเรียการ์ดใบนั้นไม่เคย Stand ในเทิร์นนี้ [โซลบลาส] : 1 Stand ใบนั้น" },
+  { id: 6, text: "จนจบเทิร์นถัดไป แวนการ์ดทั้งหมดไม่สามารถโจมตีเรียการ์ดได้ และเรียการ์ดทั้งหมดไม่สามารถโจมตีแวนการ์ดได้" },
+  { id: 7, text: "คุณเลือก จั่วการ์ด 2 หรือ ฮิล 1 ใบ" },
+  { id: 8, text: "คุณเลือกระหว่าง โซลชาร์จ 4 ใบ หรือ โซลชาร์จ 8 ใบ" },
+  { id: 9, text: "คุณนำการ์ดในมือทั้งหมดกลับเข้ากองและสลับกองการ์ด จากนั้นจั่ว 5 ใบ" },
+  { id: 10, text: "คุณคอลการ์ดจากมือลงช่องเรียการ์ด 1 ใบ ยูนิทนั้นถูกปรับพลังเป็น 5000 และได้รับ [Cont] : ในการโจมตีครั้งแรกของยูนิตนี้ ถ้าการโจมตีนั้นฮิต คุณชนะเกมทันที" },
+  { id: 11, text: "จนจบเทิร์นถัดไป คุณได้รับความสามารถ [Cont] : เมื่อคุณทำการ \"อินเตอร์เซ็ปท์\" แวนการ์ดของคุณ +10000 จนจบเทิร์น" },
+  { id: 12, text: "จนจบเทิร์นนี้ แวนการ์ดของคู่แข่งได้รับ [Cont] : เมื่อถูกโจมตี ยูนิทนี้ +1000 จนจบเทิร์น และคุณสามารถทิ้งมือ 1 ใบ เพื่อให้ยูนิทนี้ +5000 จนจบการต่อสู้นี้" },
+  { id: 13, text: "ถ้าการ์ดในโซล, มือ, ดาเมจโซนของคุณมีการ์ดรวมกันเป็น 13 ใบ คู่แข่งทำการทิ้งการ์ด 13 ใบจากเด็คลงดรอปและสุ่มการ์ดบนมือคู่แข่ง 1 ใบ นำเข้าดาเมจโซนในสภาพหงาย" },
+  { id: 14, text: "นำการ์ดบนมือของคุณ 1 ใบ สลับกับดาเมจโซนในสภาพหงาย" },
+  { id: 15, text: "นำการ์ดในดรอปโซนของคุณทั้งหมดกลับเข้ากองการ์ดและสลับกองการ์ด" },
+  { id: 16, text: "คุณสุ่มเลือกการ์ดบนมือของคู่แข่ง 1 ใบ ไบด์การ์ดใบนั้นในสภาพคว่ำ, เมื่อจบเทิร์นถัดไปของคู่แข่ง คู่แข่งนำการ์ดใบนั้นกลับขึ้นมือ" },
+  { id: 17, text: "ถ้าคู่แข่งมีการ์ดในดาเมจ 3 ใบหรือน้อยกว่า ทำดาเมจใส่แวนการ์ดคู่แข่ง 1 ดาเมจ ถ้ามีมากกว่า 3 คู่แข่งฮิล 1 ดาเมจ" },
+  { id: 18, text: "แวนการ์ดของคุณได้รับ [Auto] (1/Turn) : เมื่อจบการ์ดต่อสู้ของยูนิทนี้ Cost [ทิ้งมือ X ใบ] : Stand ยูนิทนี้และปรับไดร์ฟของยูนิทนี้ให้เท่ากับจำนวนการ์ดที่ทิ้งเป็น Cost ของยูนิทนี้" },
+  { id: 19, text: "ผู้เล่นทั้งหมดแสดงใบบนสุดของกองการ์ดของตัวเอง", subs: [["นอมอลยูนิท","คอลการ์ดใบนั้นลงช่องเรียการ์ด"],["ทริกเกอร์","วางไว้ที่เดิม"],["ออเดอร์","นำการ์ดใบนั้นขึ้นมือ"]] },
+  { id: 20, text: "นำการ์ดจากบนกองการ์ดเข้าดาเมจโซนในสภาพคว่ำจนกว่าดาเมจโซนจะครบ 5 ใบ เมื่อจบเทิร์นนั้น นำการ์ดจากดาเมจโซนกลับเข้ากองการ์ดตามจำนวนที่เอาเข้าไปและสลับกองการ์ด" },
+  { id: 21, text: "คุณคอลการ์ดจากมือ 2 ใบลงช่องเรียการ์ด ยูนิทเหล่านั้นได้รับ [Auto] : เมื่อจบการต่อสู้ที่ยูนิทนี้โจมตี Cost [นำยูนิทนี้กลับขึ้นมือ] : คอลการ์ดจากมือ 1 ใบ" },
+  { id: 22, text: "นำ Over trigger ทั้งหมดจากทุกที่กลับเข้าเด็ค" },
+  { id: 23, text: "จนจบเทิร์นนี้ เมื่อมีการ 'เช็ค' ของทั้งสองฝ่าย ให้เปลี่ยนเป็น เปิดกอง 2 ใบ นำ 1 ใบไว้ใต้กอง และ 1 ใบทำการ 'เช็ค'" },
+  { id: 24, text: "นำการ์ดจากทุกเซอร์เคิลยกเว้นช่อง V กลับขึ้นมือเจ้าของ" },
+  { id: 25, text: "จนจบเทิร์นถัดไป การโจมตีครั้งที่ 6 ขึ้นไปของเทิร์นนั้น ต้องทิ้งมือ 1 ใบ เพื่อทำการโจมตี" },
+  { id: 26, text: "ความสามารถ [Auto] ทั้งหมดไม่เกิดผลจนจบเทิร์น" },
+  { id: 27, text: "Cost ของความสามารถทั้งหมด ต้องจ่ายเป็น 2 เท่าจนจบเทิร์น" },
+  { id: 28, text: "จนจบเทิร์นนี้ ทริกเกอร์ทั้งหมดของคุณ จะออกผล 2 ครั้ง" },
+  { id: 29, text: "รีไทน์ยูนิททุกใบบนสนาม (ถ้าไม่สามารถไรด์ได้จากโซลให้นำมือ 1 ใบมาไรด์แทน)" },
+  { id: 30, text: "จนจบเทิร์นนี้ คู่แข่งได้รับ [Cont] : เมื่อมีการ์ดของคุณเข้าสู่ช่อง G จากมือ, คุณสามารถทิ้งมือ 1 ใบ เลือกยูนิทของคุณ 1 ใบ ยูนิทนั้นไม่ถูกฮิตจนจบการต่อสู้" },
+  { id: 31, text: "คุณนำ Over trigger ของคุณจากกองการ์ดออกนอกเกม และแสดงผลความสามารถทั้งหมดของการ์ดใบนั้น" },
+  { id: 32, text: "จนจบเทิร์นนี้ คุณไม่ต้องจ่ายค่า Cost ของความสามารถการ์ดทั้งหมด" },
+  { id: 33, text: "คุณนำการ์ดบนสนามทั้งหมดที่ไม่ได้อยู่ในช่อง V กลับใต้กองการ์ด และคอลใบบนสุดของกองการ์ดตามจำนวนที่นำกลับไป" },
+  { id: 34, text: "เปลี่ยนผลทั้งหมดของทริกเกอร์ของคุณจนจบเทิร์น", subs: [["Critical","แวนการ์ดของคุณ -1 คริ"],["Heal","ทำความเสียหายใส่แวนการ์ดของคุณ 1 ดาเมจ"],["Draw","คุณทิ้งมือ 1 ใบ"],["Stand","คุณเลือกเรสเรียการ์ดที่ Stand อยู่ของคุณ 1 ใบ"],["Front","ยูนิทแถวหลังของคุณ +10000"],["Over","ทำความเสียหายใส่แวนการ์ดคุณ 100 ล้านดาเมจ"]] },
+  { id: 35, text: "ออกผลเอฟเฟคตามนี้", subs: [["ถ้าแวนการ์ดเกรด 2 หรือต่ำกว่า","นำการ์ดจากกองการ์ดหรือไรด์ไลน์ 1 ใบที่มีเกรดมากกว่า 1 เกรด นำมาไรด์ในสภาพ Stand"],["ถ้าแวนการ์ดเกรด 3","ทำการเปิด Persona และจั่ว 1 ใบ"],["ถ้าแวนการ์ดเกรด 4 หรือสูงกว่า","เลือกรับกิฟ(V) 1 ใบ"]] },
+  { id: 36, text: "คุณคอลการ์ดจากดรอปโซนของคุณลงช่อง R จนกว่าจะเต็มทุกช่อง" },
+  { id: 37, text: "จนจบเทิร์นถัดไป เรียการ์ดทุกใบ +10000" },
+  { id: 38, text: "จนจบไฟต์นี้ ผู้เล่นทุกคนจะมีการ์ดบนมือได้ไม่เกิน 10 ใบ (ถ้ามีการเพิ่มมือจนเกิน ให้ทิ้งจนกว่าจะเหลือ 10 ใบ)", persistent: true },
+  { id: 39, text: "เลือกการ์ดจากมือของคุณ 1 ใบ ทำการ Legion กับยูนิทที่อยู่บนช่อง V ของคุณ และเมื่อจบเทิร์นนั้นนำ Mate 1 ใบของคุณกลับขึ้นมือ" },
+  { id: 40, text: "คู่แข่งหงายการ์ดบนดาเมจโซนทั้งหมด และคุณจั่วตามจำนวนการ์ดที่ถูกหงายจากความสามารถนี้, คู่แข่งเลือกยูนิทของตัวเองตามจำนวนการ์ดที่ถูกหงาย ยูนิทที่ถูกเลือกไม่สามารถ Stand ได้ใน Stand Phase ถัดไป" },
+  { id: 41, text: "จนจบเทิร์นนี้ เรียการ์ดทุกใบของคุณสามารถไดร์ฟเช็คได้ 1 ไดร์ฟ" },
+  { id: 42, text: "คุณค้นหาการ์ดจากกองไม่เกิน 1 ใบ แสดงและนำเข้าโซล, จนจบเทิร์นนี้ แวนการ์ดของคุณได้รับความสามารถทุกอย่างของการ์ดที่นำเข้าโซล" },
+  { id: 43, text: "เลือกหงายการ์ดของคุณไม่เกิน 5 ใบ (ไม่นับเป็นการปลดล็อค)" },
+  { id: 44, text: "เลือกการ์ดจากดรอปของคุณ 1 ใบ นำการ์ดที่มีชื่อเดียวกันกับการ์ดใบนั้นทั้งหมดจาก มือ, สนาม, โซล, ดาเมจโซน, ไบด์โซน กลับเข้ากองการ์ด (ในกรณีที่การ์ดใบนั้นมี 2 ชื่อ ให้เลือกแค่ 1 ชื่อจากในนั้น)" },
+  { id: 45, text: "จนจบเทิร์นถัดไป เรียการ์ดของผู้เล่นทุกคนจะมีพลังเป็น 0 และไม่ถูกเพิ่ม, และแวนการ์ดของผู้เล่นทุกคนได้รับ [Cont] : ยูนิทนี้ได้รับพลังตั้งต้นของเรียการ์ดทุกใบในสนามของคุณ และการเพิ่มพลังให้กับยูนิทในสนามของคุณจะเปลี่ยนเป้าหมายการเพิ่มพลังมาที่ใบนี้แทน" },
+];
+
+// PERSISTENT rules active this game (array of rule ids)
+let persistentActive = [];
+// History: array of rule ids, most recent first, max 2
+let history = [];
+
+
+function getRuleById(id) { return rules.find(r => r.id === id); }
+
+function buildRuleHTML(rule) {
+  let html = rule.text;
+  if (rule.subs) {
+    html += '<br>';
+    rule.subs.forEach(([label, val]) => {
+      html += `<span class="sub-item"><strong>${label}</strong> — ${val}</span>`;
+    });
+  }
+  return html;
+}
+
+function spinRule() {
+  const btn = document.getElementById('spinBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const targetRule = rules[Math.floor(Math.random() * rules.length)];
+  runSlotAnimation(targetRule, () => {
+    btn.disabled = false;
+    history.unshift(targetRule.id);
+    if (history.length > 2) history.pop();
+    updateHistoryButtons();
+    if (targetRule.persistent && !persistentActive.includes(targetRule.id)) {
+      persistentActive.push(targetRule.id);
+      updatePersistBanner();
+    }
+    showResult(targetRule);
+    spawnParticles();
+  });
+}
+
+function runSlotAnimation(targetRule, onDone) {
+  const overlay = document.getElementById('slotOverlay');
+  const reel = document.getElementById('slotReel');
+  const dots = document.querySelectorAll('.slot-dot');
+  overlay.classList.add('active');
+
+  const itemH = 44;
+  const totalItems = 28;
+  const allIds = rules.map(r => r.id);
+
+  let items = [];
+  for (let i = 0; i < totalItems - 1; i++) {
+    items.push(allIds[Math.floor(Math.random() * allIds.length)]);
+  }
+  items.push(targetRule.id);
+
+  reel.innerHTML = items.map((id, i) =>
+    `<div class="slot-item"><span class="slot-num${i === items.length-1 ? ' final' : ''}">${id}</span></div>`
+  ).join('');
+
+  const finalY = 60 - ((totalItems - 1) * itemH + itemH / 2);
+  const startY = 60 - itemH / 2;
+  const duration = 2400;
+  const startTime = performance.now();
+
+  let dotIdx = 0;
+  const dotInterval = setInterval(() => {
+    dots.forEach((d, i) => d.classList.toggle('lit', i === dotIdx % 5));
+    dotIdx++;
+  }, 100);
+
+  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+
+    let progress;
+    if (t < 0.5) {
+      // fast linear phase
+      progress = (t / 0.5) * 0.8;
+    } else {
+      // slow ease-out phase
+      const t2 = (t - 0.5) / 0.5;
+      progress = 0.8 + easeOutQuart(t2) * 0.2;
+    }
+
+    const currentY = startY + (finalY - startY) * progress;
+    reel.style.transform = `translateY(${currentY}px)`;
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      clearInterval(dotInterval);
+      dots.forEach(d => d.classList.add('lit'));
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        dots.forEach(d => d.classList.remove('lit'));
+        onDone();
+      }, 450);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// Two-turn rules
+const TWO_TURN_IDS = [6, 11, 25, 37, 45];
+// activeEffects: array of { rule, turnsLeft }
+let activeEffects = [];
+
+function updateActiveCards() {
+  const wrap = document.getElementById('activeCardsWrap');
+  if (activeEffects.length === 0) { wrap.innerHTML = ''; return; }
+
+  // Two-turn effects first, current-turn last
+  const twoTurn = activeEffects.filter(e => TWO_TURN_IDS.includes(e.rule.id));
+  const current = activeEffects.filter(e => !TWO_TURN_IDS.includes(e.rule.id));
+  const sorted = [...twoTurn, ...current];
+
+  wrap.innerHTML = sorted.map((e, i) => {
+    const isTwoTurn = TWO_TURN_IDS.includes(e.rule.id);
+    const isLong = e.rule.text.length > 60 || (e.rule.subs && e.rule.subs.length > 0);
+    return `<div class="effect-card${isTwoTurn ? ' two-turn' : ''}" onclick="toggleCard(this)">
+      <div class="effect-card-header">
+        <span class="effect-card-num">ข้อ ${e.rule.id}</span>
+        <span class="effect-card-label">เอฟเฟคที่กำลังแสดงผล</span>
+        ${isTwoTurn ? `<span class="effect-card-turns">เหลือ ${e.turnsLeft} เทิร์น</span>` : ''}
+      </div>
+      <div class="effect-card-text">${e.rule.text}</div>
+      <div class="effect-card-subs" style="display:none;margin-top:6px;font-size:0.82rem;line-height:1.6;color:var(--text-muted);">${e.rule.subs ? e.rule.subs.map(([label,val]) => `<span style="display:block;padding-left:0.5rem;margin-top:3px;"><span style="color:var(--gold-light);font-weight:500;">${label}</span> — ${val}</span>`).join('') : ''}</div>
+      ${isLong ? `<div class="effect-card-expand-hint">กดเพื่อดูเพิ่ม ▾</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(el) {
+  const isExpanded = el.classList.toggle('expanded');
+  const hint = el.querySelector('.effect-card-expand-hint');
+  const subs = el.querySelector('.effect-card-subs');
+  if (hint) hint.textContent = isExpanded ? 'ย่อลง ▴' : 'กดเพื่อดูเพิ่ม ▾';
+  if (subs && subs.innerHTML.trim()) subs.style.display = isExpanded ? 'block' : 'none';
+}
+
+function tickEffects() {
+  // Decrement two-turn effects, remove expired
+  activeEffects = activeEffects
+    .map(e => TWO_TURN_IDS.includes(e.rule.id) ? { ...e, turnsLeft: e.turnsLeft - 1 } : e)
+    .filter(e => !TWO_TURN_IDS.includes(e.rule.id) || e.turnsLeft > 0);
+}
+
+function addEffect(rule) {
+  // Remove old single-turn entries (including previous persistent shown as current)
+  activeEffects = activeEffects.filter(e => TWO_TURN_IDS.includes(e.rule.id));
+  if (TWO_TURN_IDS.includes(rule.id)) {
+    const existing = activeEffects.find(e => e.rule.id === rule.id);
+    if (existing) { existing.turnsLeft = 2; }
+    else { activeEffects.push({ rule, turnsLeft: 2 }); }
+  } else {
+    // Rule 38 and all normal rules show as current turn card
+    activeEffects.unshift({ rule, turnsLeft: 1 });
+  }
+  updateActiveCards();
+}
+
+function showResult(rule) {
+  document.getElementById('ruleNumDisplay').textContent = rule.id;
+  document.getElementById('ruleShortTitle').textContent = `กฏข้อที่ ${rule.id}`;
+  document.getElementById('ruleTextDisplay').innerHTML = buildRuleHTML(rule);
+
+  document.getElementById('resultOverlay').classList.add('open');
+  tickEffects();
+  addEffect(rule);
+}
+
+function showHistoryRule(index) {
+  if (history[index] === undefined) return;
+  const rule = getRuleById(history[index]);
+  if (rule) showResult(rule);
+}
+
+function updateHistoryButtons() {
+  for (let i = 0; i < 2; i++) {
+    const btn = document.getElementById(`histBtn${i+1}`);
+    const numEl = document.getElementById(`histNum${i+1}`);
+    if (history[i] !== undefined) {
+      btn.classList.remove('empty');
+      numEl.className = 'hbtn-num';
+      numEl.textContent = history[i];
+    } else {
+      btn.classList.add('empty');
+      numEl.className = 'hbtn-num empty-num';
+      numEl.textContent = '—';
+    }
+  }
+}
+
+function updatePersistBanner() {
+  const section = document.getElementById('persistCardSection');
+  const textEl = document.getElementById('persistCardText');
+  if (!section || !textEl) return;
+  if (persistentActive.length === 0) {
+    section.classList.remove('visible');
+    return;
+  }
+  const r = getRuleById(persistentActive[0]);
+  textEl.textContent = r ? r.text : '';
+  section.classList.add('visible');
+}
+
+function buildRulesList() {
+  const container = document.getElementById('rulesList');
+  container.innerHTML = rules.map(r => {
+    let subHtml = '';
+    if (r.subs) {
+      subHtml = r.subs.map(([label, val]) =>
+        `<span class="sub"><b>${label}</b> — ${val}</span>`
+      ).join('');
+    }
+    const persistTag = r.persistent ? `<span style="font-size:0.72rem;color:rgba(231,76,60,0.8);margin-left:6px;background:rgba(192,57,43,0.15);padding:1px 6px;border-radius:3px;">ตลอดเกม</span>` : '';
+    return `<div class="rule-item">
+      <div class="rule-item-num">${r.id}</div>
+      <div class="rule-item-text">${r.text}${persistTag}${subHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function openRulesModal() {
+  buildRulesList();
+  document.getElementById('rulesOverlay').classList.add('open');
+}
+
+function openConfirm() {
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function doReset() {
+  history = [];
+  persistentActive = [];
+  activeEffects = [];
+  updateHistoryButtons();
+  updatePersistBanner();
+  updateActiveCards();
+  closeModal('confirmOverlay');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeOnBg(e, id) {
+  if (e.target.id === id) closeModal(id);
+}
+
+// Particles
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function spawnParticles() {
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  for (let i = 0; i < 20; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3;
+    particles.push({ x: cx, y: cy, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 1, life: 1, size: 2 + Math.random()*4, color: Math.random() > 0.5 ? '#c9a84c' : '#e74c3c' });
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life -= 0.018;
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+setInterval(() => {
+  if (particles.length < 60) {
+    particles.push({ x: Math.random()*window.innerWidth, y: window.innerHeight+10, vx: (Math.random()-0.5)*0.4, vy: -(0.3+Math.random()*0.6), life: 0.4+Math.random()*0.3, size: 1+Math.random()*2, color: 'rgba(201,168,76,0.6)' });
+  }
+}, 300);
+// ── Dice ──
+const PIP_LAYOUTS = {
+  1: [[1,1]],
+  2: [[0,0],[2,2]],
+  3: [[0,0],[1,1],[2,2]],
+  4: [[0,0],[0,2],[2,0],[2,2]],
+  5: [[0,0],[0,2],[1,1],[2,0],[2,2]],
+  6: [[0,0],[0,2],[1,0],[1,2],[2,0],[2,2]],
+};
+
+function renderDieFace(faceEl, num, pipClass) {
+  pipClass = pipClass || 'pip-blue';
+  // Pip positions as % (top, left) within 60x60 die face
+  const layouts = {
+    1: [[50,50]],
+    2: [[25,25],[75,75]],
+    3: [[25,25],[50,50],[75,75]],
+    4: [[25,25],[25,75],[75,25],[75,75]],
+    5: [[25,25],[25,75],[50,50],[75,25],[75,75]],
+    6: [[25,25],[25,75],[50,25],[50,75],[75,25],[75,75]],
+  };
+  const container = document.createElement('div');
+  container.style.cssText = 'position:relative;width:60px;height:60px;';
+  (layouts[num] || []).forEach(([top, left]) => {
+    const pip = document.createElement('div');
+    pip.className = 'pip ' + pipClass;
+    pip.style.cssText = `position:absolute;top:${top}%;left:${left}%;transform:translate(-50%,-50%);`;
+    container.appendChild(pip);
+  });
+  faceEl.innerHTML = '';
+  faceEl.appendChild(container);
+}
+
+function openDice() {
+  document.getElementById('diceOverlay').classList.add('open');
+  // Reset to blank
+  renderDieFace(document.getElementById('dieFace1'), 1, 'pip-blue');
+  renderDieFace(document.getElementById('dieFace2'), 1, 'pip-red');
+  document.getElementById('diceResult').textContent = '—';
+  document.getElementById('diceResult').classList.add('hidden');
+
+}
+
+function rollDice() {
+  const btn = document.getElementById('diceRollBtn');
+  const d1 = document.getElementById('die1');
+  const d2 = document.getElementById('die2');
+  const resultEl = document.getElementById('diceResult');
+
+
+  btn.disabled = true;
+  resultEl.classList.add('hidden');
+
+  d1.classList.add('rolling');
+  d2.classList.add('rolling');
+
+  const final1 = Math.ceil(Math.random() * 6);
+  const final2 = Math.ceil(Math.random() * 6);
+
+  let tick = 0;
+  const interval = setInterval(() => {
+    renderDieFace(document.getElementById('dieFace1'), Math.ceil(Math.random()*6), 'pip-blue');
+    renderDieFace(document.getElementById('dieFace2'), Math.ceil(Math.random()*6), 'pip-red');
+    tick++;
+    if (tick > 14) {
+      clearInterval(interval);
+      d1.classList.remove('rolling');
+      d2.classList.remove('rolling');
+      renderDieFace(document.getElementById('dieFace1'), final1, 'pip-blue');
+      renderDieFace(document.getElementById('dieFace2'), final2, 'pip-red');
+      d1.classList.add('landed');
+      d2.classList.add('landed');
+      setTimeout(() => {
+        d1.classList.remove('landed');
+        d2.classList.remove('landed');
+        let msg = '';
+        if (final1 > final2) msg = 'Player 1 เป็นฝ่ายเริ่มก่อน';
+        else if (final2 > final1) msg = 'Player 2 เป็นฝ่ายเริ่มก่อน';
+        else msg = 'แต้มเสมอ — ทอยใหม่!';
+        resultEl.textContent = msg;
+        resultEl.classList.remove('hidden');
+        btn.disabled = false;
+      }, 300);
+    }
+  }, 60);
+}
+
+</script>
+
+<!-- Dice modal -->
+<div class="modal-overlay" id="diceOverlay" onclick="closeOnBg(event,'diceOverlay')">
+  <div class="dice-modal">
+    <div class="dice-modal-title">🎲 ทอยลูกเต๋า</div>
+    <div class="dice-area">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <span style="font-size:0.7rem;color:rgba(100,160,255,0.8);letter-spacing:1px;text-transform:uppercase;">Player 1</span>
+        <div class="die" id="die1"><div class="die-face" id="dieFace1"></div></div>
+      </div>
+      <div class="dice-plus">vs</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <span style="font-size:0.7rem;color:rgba(231,76,60,0.8);letter-spacing:1px;text-transform:uppercase;">Player 2</span>
+        <div class="die" id="die2"><div class="die-face" id="dieFace2"></div></div>
+      </div>
+    </div>
+    <div class="dice-result hidden" id="diceResult"></div>
+    <button class="dice-roll-btn" id="diceRollBtn" onclick="rollDice()">🎲 ทอย</button>
+    <button class="dice-close-btn" onclick="closeModal('diceOverlay')">ปิด</button>
+  </div>
+</div>
+</body>
+</html>
